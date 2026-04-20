@@ -2,12 +2,12 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 dayjs.locale('ko')
 
-export const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+export const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 
-// 해당 월의 달력 그리드 생성 (6주 고정 or 5주)
+// 해당 월의 달력 그리드 생성 (6주 고정 or 5주) — 월요일 시작
 export function buildCalendarGrid(year, month) {
   const firstDay = dayjs(`${year}-${String(month).padStart(2,'0')}-01`)
-  const startDow = firstDay.day()
+  const startDow = (firstDay.day() + 6) % 7  // 월=0 ~ 일=6
   const daysInMonth = firstDay.daysInMonth()
   const prevMonth = firstDay.subtract(1, 'month')
   const nextMonth = firstDay.add(1, 'month')

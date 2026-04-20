@@ -60,29 +60,29 @@ export default function CalendarCell({ year, month, day, isCurrentMonth, shift, 
         overflow: 'hidden',
       }}
     >
-      {/* ── 우상단 근무 뱃지 ── */}
-      {shift && isCurrentMonth && (
-        <div style={{
-          position: 'absolute', top: 2, right: 2,
-          opacity: 0.7, pointerEvents: 'none', zIndex: 1,
-        }}>
-          <ShiftBadge type={shift} size={14} fontSize={8} />
-        </div>
-      )}
-
-      {/* ── 날짜 숫자 줄 (border-bottom 으로 날짜 아래에 선 배치) ── */}
+      {/* ── 날짜 숫자 줄 (flex 컨테이너: 날짜+뱃지 수직 중앙 정렬) ── */}
       <div style={{
-        padding: '3px 18px 3px 4px',
-        lineHeight: 1,
+        height: 22,
+        padding: '0 2px 0 4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         borderBottom: '1px solid var(--color-border)',
+        flexShrink: 0,
       }}>
         <span style={{
           fontWeight:  today ? 900 : 500,
           fontSize:    `calc(13px * var(--font-scale))`,
           color:       numColor,
+          lineHeight:  1,
         }}>
           {day}
         </span>
+        {shift && isCurrentMonth && (
+          <div style={{ opacity: 0.7, pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
+            <ShiftBadge type={shift} size={16} fontSize={9} />
+          </div>
+        )}
       </div>
 
       {/* ── 정보 영역 — 날짜 아래로 내림 ── */}

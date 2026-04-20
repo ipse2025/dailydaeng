@@ -4,8 +4,8 @@ import { useRef } from 'react'
 import CalendarCell from './CalendarCell'
 import WeeklyStats  from './WeeklyStats'
 
-const DAY_LABELS = ['일','월','화','수','목','금','토']
-const DAY_COLORS = ['#EF4444','var(--color-text1)','var(--color-text1)','var(--color-text1)','var(--color-text1)','var(--color-text1)','#3B82F6']
+const DAY_LABELS = ['월','화','수','목','금','토','일']
+const DAY_COLORS = ['var(--color-text1)','var(--color-text1)','var(--color-text1)','var(--color-text1)','var(--color-text1)','#3B82F6','#EF4444']
 const STAT_W     = 52  // px
 
 // 스와이프 감지 임계값
@@ -36,7 +36,11 @@ export default function CalendarGrid({
     const t = e.touches[0]
     const dx = t.clientX - startRef.current.x
     const dy = t.clientY - startRef.current.y
-    if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * SWIPE_AXIS_RATIO) {
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+    // 가로 우세 또는 세로 우세 중 하나라도 감지되면 스와이프 진행 중
+    if ((absDx > 20 && absDx > absDy * SWIPE_AXIS_RATIO) ||
+        (absDy > 20 && absDy > absDx * SWIPE_AXIS_RATIO)) {
       swipingRef.current = true
     }
   }
@@ -50,16 +54,32 @@ export default function CalendarGrid({
     const dy = t.clientY - s.y
     const dt = Date.now() - s.time
     if (dt > SWIPE_MAX_DURATION) return
-    if (Math.abs(dx) < SWIPE_THRESHOLD) return
-    if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return
-    // 연속 스와이프 차단 — 직전 스와이프와 350ms 이내라면 무시
+
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+    let triggered = false
+    let isNext = false
+
+    // 가로 스와이프: 좌(next) / 우(prev)
+    if (absDx >= SWIPE_THRESHOLD && absDx >= absDy * SWIPE_AXIS_RATIO) {
+      triggered = true
+      isNext = dx < 0
+    }
+    // 세로 스와이프: 위(next) / 아래(prev)
+    else if (absDy >= SWIPE_THRESHOLD && absDy >= absDx * SWIPE_AXIS_RATIO) {
+      triggered = true
+      isNext = dy < 0
+    }
+
+    if (!triggered) return
+    // 연속 스와이프 차단
     const now = Date.now()
     if (now - lastSwipeAt.current < SWIPE_COOLDOWN) return
     lastSwipeAt.current = now
     // 셀 탭 방지
     e.preventDefault?.()
     e.stopPropagation?.()
-    if (dx < 0) onSwipeNext?.()
+    if (isNext) onSwipeNext?.()
     else onSwipePrev?.()
   }
 
