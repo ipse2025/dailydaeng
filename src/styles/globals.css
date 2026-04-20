@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── 기본 테마 변수 ─────────────────────────────── */
+:root {
+  --color-primary:  #3B82F6;
+  --color-surface:  #FFFFFF;
+  --color-bg:       #F2F4F7;
+  --color-border:   #DDE1E9;
+  --color-text1:    #1A1D23;
+  --color-text2:    #6B7280;
+  --color-text3:    #B0B7C3;
+
+  /* 근무 뱃지 기본값 */
+  --badge-day-fill:      #F59E0B;
+  --badge-day-text:      #FFFFFF;
+  --badge-day-outline:   #B45309;
+  --badge-day-outline-w: 1.5px;
+
+  --badge-night-fill:      #64748B;
+  --badge-night-text:      #FFFFFF;
+  --badge-night-outline:   #1F2937;
+  --badge-night-outline-w: 1.5px;
+
+  --badge-off-fill:      #EF4444;
+  --badge-off-text:      #FFFFFF;
+  --badge-off-outline:   #991B1B;
+  --badge-off-outline-w: 1.5px;
+
+  --badge-rest-fill:      #FFFFFF;
+  --badge-rest-text:      #EF4444;
+  --badge-rest-outline:   #EF4444;
+  --badge-rest-outline-w: 2px;
+
+  /* 글자 크기 배율 */
+  --font-scale: 1;
+}
+
+/* ── 다크 테마 ──────────────────────────────────── */
+[data-theme="dark"] {
+  --color-surface: #1E293B;
+  --color-bg:      #0F172A;
+  --color-border:  #334155;
+  --color-text1:   #F1F5F9;
+  --color-text2:   #94A3B8;
+  --color-text3:   #475569;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text1);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ── 근무 뱃지 ──────────────────────────────────── */
+.shift-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 900;
+  line-height: 1;
+  user-select: none;
+}
+.shift-badge.주 {
+  background: var(--badge-day-fill);
+  color: var(--badge-day-text);
+  border: var(--badge-day-outline-w) solid var(--badge-day-outline);
+}
+.shift-badge.야 {
+  background: var(--badge-night-fill);
+  color: var(--badge-night-text);
+  border: var(--badge-night-outline-w) solid var(--badge-night-outline);
+}
+.shift-badge.비 {
+  background: var(--badge-off-fill);
+  color: var(--badge-off-text);
+  border: var(--badge-off-outline-w) solid var(--badge-off-outline);
+}
+.shift-badge.휴 {
+  background: var(--badge-rest-fill);
+  color: var(--badge-rest-text);
+  border: var(--badge-rest-outline-w) solid var(--badge-rest-outline);
+}
+
+/* ── 스크롤바 숨김 (모바일 느낌) ────────────────── */
+::-webkit-scrollbar { display: none; }
+
+/* ── 애니메이션 ──────────────────────────────────── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-down    { animation: slideDown    0.18s ease-out; }
+.animate-slide-up      { animation: slideUp      0.22s ease-out; }
+.animate-slide-in-left { animation: slideInLeft  0.22s ease-out; }
+.animate-fade-in       { animation: fadeIn       0.15s ease-out; }
+
+/* ── 모달 오버레이 ──────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 100;
+  display: flex; align-items: flex-end;
+}
