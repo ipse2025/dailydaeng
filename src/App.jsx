@@ -24,6 +24,7 @@ import WeeklyExpensesModal  from './components/Expense/WeeklyExpensesModal'
 import MonthlyExpensesModal from './components/Expense/MonthlyExpensesModal'
 import InAppBanner          from './components/Notifier/InAppBanner'
 import DDayDrawer           from './components/DDay/DDayDrawer'
+import BackupButton         from './components/Backup/BackupButton'
 import { CloverIcon, HeartIcon } from './components/icons/NotifierIcons'
 
 export default function App() {
@@ -148,7 +149,7 @@ export default function App() {
           <button onClick={() => { haptic(); closeDropdowns(); setShowPicker(v=>!v) }}
                   style={{ display:'flex', alignItems:'center', gap:6,
                            background:'none', border:'none', cursor:'pointer', padding:'2px 6px' }}>
-            <span style={{ fontWeight:900, fontSize:`calc(22px * var(--font-scale))`, color:'var(--color-text1)' }}>
+            <span style={{ fontWeight:900, fontSize:`calc(19px * var(--font-scale))`, color:'var(--color-text1)' }}>
               {year}.{String(month).padStart(2,'0')}
             </span>
             <span style={{ color:'var(--color-primary)', fontSize:12 }}>{showPicker?'▲':'▼'}</span>
@@ -161,8 +162,8 @@ export default function App() {
           )}
         </div>
 
-        {/* 우측 버튼 4개 */}
-        <div style={{ display:'flex', gap:6, position:'relative' }}>
+        {/* 우측 버튼 5개 */}
+        <div style={{ display:'flex', gap:3, position:'relative' }}>
           <div style={{ position:'relative' }}>
             <Btn bg="var(--color-primary)" onClick={()=>{ haptic(); setShowPicker(false); setShowShift(v=>!v) }}>📅</Btn>
             {showShift && (
@@ -176,6 +177,7 @@ export default function App() {
                    onClick={()=>{ haptic(); closeDropdowns(); setShowBot(true) }} />
           <DollarBtn total={monthlyTotal}
                      onClick={() => { haptic(); closeDropdowns(); setShowMonthly(true) }} />
+          <BackupButton haptic={haptic} />
         </div>
       </div>
 
@@ -256,8 +258,8 @@ export default function App() {
 function Btn({ bg, onClick, children }) {
   return (
     <button onClick={onClick} style={{
-      width:34, height:34, borderRadius:9, background:bg, color:'#fff',
-      border:'none', cursor:'pointer', fontSize:16,
+      width:28, height:28, borderRadius:7, background:bg, color:'#fff',
+      border:'none', cursor:'pointer', fontSize:14,
       display:'flex', alignItems:'center', justifyContent:'center',
       fontFamily:"'Noto Sans KR',sans-serif", flexShrink:0,
     }}>{children}</button>
@@ -267,7 +269,7 @@ function Btn({ bg, onClick, children }) {
 function IconBtn({ src, alt, onClick }) {
   return (
     <button onClick={onClick} aria-label={alt} style={{
-      width:34, height:34, borderRadius:9,
+      width:28, height:28, borderRadius:7,
       background:'#EAE9E9', border:'1px solid rgba(0,0,0,0.08)',
       cursor:'pointer', padding:0, flexShrink:0,
       display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
@@ -281,14 +283,14 @@ function IconBtn({ src, alt, onClick }) {
 function DollarBtn({ total, onClick }) {
   return (
     <button onClick={onClick} style={{
-      width:34, height:34, borderRadius:9, background:'#F59E0B', color:'#fff',
+      width:28, height:28, borderRadius:7, background:'#F59E0B', color:'#fff',
       border:'none', cursor:'pointer',
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
       fontFamily:"'Noto Sans KR',sans-serif", flexShrink:0, lineHeight:1, gap:1,
       padding: 0,
     }}>
-      <span style={{ fontSize:14, fontWeight:900 }}>$</span>
-      <span style={{ fontSize:7, fontWeight:700 }}>{shortTotal(total)}</span>
+      <span style={{ fontSize:13, fontWeight:900 }}>$</span>
+      <span style={{ fontSize:6, fontWeight:700 }}>{shortTotal(total)}</span>
     </button>
   )
 }
