@@ -111,13 +111,16 @@ export default function CalendarGrid({
       }}>
         {DAY_LABELS.map((lbl,i) => (
           <div key={i} style={{
-            textAlign:'center', padding:'5px 0',
+            textAlign:'center',
+            height: 22, display:'flex', alignItems:'center', justifyContent:'center',
             fontSize:`calc(12px * var(--font-scale))`,
             fontWeight:700, color:DAY_COLORS[i],
+            borderRight: i < 6 ? '1px solid var(--color-border)' : 'none',
           }}>{lbl}</div>
         ))}
         <div style={{
-          textAlign:'center', padding:'5px 0',
+          textAlign:'center',
+          height: 22, display:'flex', alignItems:'center', justifyContent:'center',
           fontSize:`calc(11px * var(--font-scale))`,
           fontWeight:700, color:'var(--color-primary)',
           borderLeft:'1px solid var(--color-border)',

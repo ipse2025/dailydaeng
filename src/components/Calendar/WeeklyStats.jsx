@@ -24,17 +24,18 @@ export default function WeeklyStats({ weekNum, byCat = {}, expTotal = 0, onClick
         cursor: onClick ? 'pointer' : 'default',
       }}>
 
-      {/* 주차 라벨 — CalendarCell 날짜줄과 동일 구조/폰트 */}
+      {/* 주차 라벨 — CalendarCell 날짜줄과 동일 높이/정렬 (22px flex center) */}
       <div style={{
-        padding: '3px 4px',
-        lineHeight: 1,
+        height: 22,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         borderBottom: '1px solid var(--color-border)',
-        textAlign: 'center',
+        flexShrink: 0,
       }}>
         <span style={{
           fontWeight: 700,
           fontSize: `calc(13px * var(--font-scale))`,
           color: 'var(--color-text2)',
+          lineHeight: 1,
         }}>
           {weekNum}주
         </span>
