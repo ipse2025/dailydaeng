@@ -9,12 +9,18 @@
 
 import { store } from './localStore'
 
-export const BACKUP_VERSION   = 2
-export const SCHEMA_ENTRIES   = 1
-export const SCHEMA_DDAYS     = 1
+export const BACKUP_VERSION       = 2
+export const SCHEMA_ENTRIES       = 1
+export const SCHEMA_DDAYS         = 1
+export const SCHEMA_SETTINGS      = 1
+export const SCHEMA_SHIFT_PATTERN = 1
 
-const KEY_ENTRIES = store.PREFIX + 'entries'   // dailydaeng.entries
-const KEY_DDAYS   = store.PREFIX + 'ddays'     // dailydaeng.ddays
+const KEY_ENTRIES       = store.PREFIX + 'entries'       // dailydaeng.entries
+const KEY_DDAYS         = store.PREFIX + 'ddays'         // dailydaeng.ddays
+const KEY_SETTINGS      = store.PREFIX + 'settings'      // dailydaeng.settings
+const KEY_SHIFT_PATTERN = store.PREFIX + 'shiftPattern'  // dailydaeng.shiftPattern
+
+const EXPLICIT_KEYS = new Set([KEY_ENTRIES, KEY_DDAYS, KEY_SETTINGS, KEY_SHIFT_PATTERN])
 
 // ── entry 정규화 ──────────────────────────────────────────
 // 알려지지 않은 필드까지 보존하면서, legacy 필드를 표준 필드로 마이그레이션
@@ -76,10 +82,27 @@ function newDDayId() {
     : `dd_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+// ── settings 정규화 ──────────────────────────────────────
+// 모든 필드를 보존하되, 객체가 아니거나 null이면 null 반환 (복원 시 무시)
+function sanitizeSettings(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  return { ...raw }
+}
+
+// ── shiftPattern 정규화 ──────────────────────────────────
+// 구조가 자유로워서 객체이기만 하면 그대로 보존
+function sanitizeShiftPattern(raw) {
+  if (raw == null) return null
+  if (typeof raw !== 'object') return null
+  return Array.isArray(raw) ? [...raw] : { ...raw }
+}
+
 // ── 백업 페이로드 생성 (현재 localStorage → v2 payload) ─────
 export function buildBackupPayload() {
-  const entriesObj = store.read('entries', {})
-  const ddaysList  = store.read('ddays', [])
+  const entriesObj   = store.read('entries', {})
+  const ddaysList    = store.read('ddays', [])
+  const settingsRaw  = store.read('settings', null)
+  const shiftPatRaw  = store.read('shiftPattern', null)
 
   const entries = Object.values(entriesObj || {})
     .map(sanitizeEntry)
@@ -89,12 +112,15 @@ export function buildBackupPayload() {
     .map(sanitizeDDay)
     .filter(Boolean)
 
-  // 기타 dailydaeng.* 키는 raw 맵으로 (settings 등)
+  const settings     = sanitizeSettings(settingsRaw)
+  const shiftPattern = sanitizeShiftPattern(shiftPatRaw)
+
+  // 기타 dailydaeng.* 키는 raw 맵으로 (앞으로 추가될 미지의 키 보존용)
   const raw = {}
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i)
     if (!k || !k.startsWith(store.PREFIX)) continue
-    if (k === KEY_ENTRIES || k === KEY_DDAYS) continue  // 명시 영역과 중복 방지
+    if (EXPLICIT_KEYS.has(k)) continue  // 명시 영역과 중복 방지
     raw[k] = localStorage.getItem(k)
   }
 
@@ -102,9 +128,16 @@ export function buildBackupPayload() {
     version:     BACKUP_VERSION,
     app:         'dailydaeng-app',
     exported_at: new Date().toISOString(),
-    schemas:     { entries: SCHEMA_ENTRIES, ddays: SCHEMA_DDAYS },
+    schemas: {
+      entries:      SCHEMA_ENTRIES,
+      ddays:        SCHEMA_DDAYS,
+      settings:     SCHEMA_SETTINGS,
+      shiftPattern: SCHEMA_SHIFT_PATTERN,
+    },
     entries,
     ddays,
+    settings,
+    shiftPattern,
     raw,
   }
 }
@@ -155,7 +188,7 @@ function applyV1(payload) {
       count++
     }
   })
-  // v1을 v2 영역으로도 정규화 — entries/ddays 파싱 재적용 (legacy 필드 마이그레이션)
+  // v1을 v2 명시 영역에 맞춰 정규화 (legacy 필드 마이그레이션)
   try {
     const entriesObj = store.read('entries', {})
     const cleaned = {}
@@ -171,7 +204,15 @@ function applyV1(payload) {
       store.write('ddays', ddays.map(sanitizeDDay).filter(Boolean))
     }
   } catch (_) {}
-  return { entries: -1, ddays: -1, raw: count, version: 1 }
+  try {
+    const s = sanitizeSettings(store.read('settings', null))
+    if (s) store.write('settings', s)
+  } catch (_) {}
+  try {
+    const sp = sanitizeShiftPattern(store.read('shiftPattern', null))
+    if (sp) store.write('shiftPattern', sp)
+  } catch (_) {}
+  return { entries: -1, ddays: -1, settings: -1, shiftPattern: -1, raw: count, version: 1 }
 }
 
 function applyV2(payload) {
@@ -194,15 +235,38 @@ function applyV2(payload) {
   const ddayList = ddays.map(sanitizeDDay).filter(Boolean)
   store.write('ddays', ddayList)
 
-  // raw: entries/ddays 키는 무시 (위에서 명시 처리)
+  // settings: 객체 그대로 보존 (모든 필드 유지)
+  let settingsApplied = 0
+  const settings = sanitizeSettings(payload.settings)
+  if (settings) {
+    store.write('settings', settings)
+    settingsApplied = 1
+  }
+
+  // shiftPattern
+  let shiftApplied = 0
+  const shiftPattern = sanitizeShiftPattern(payload.shiftPattern)
+  if (shiftPattern) {
+    store.write('shiftPattern', shiftPattern)
+    shiftApplied = 1
+  }
+
+  // raw: 명시 영역 키는 무시 (이중 적용 방지)
   let rawCount = 0
   Object.entries(raw).forEach(([k, v]) => {
     if (typeof k !== 'string' || !k.startsWith(store.PREFIX)) return
-    if (k === KEY_ENTRIES || k === KEY_DDAYS) return
+    if (EXPLICIT_KEYS.has(k)) return
     if (typeof v !== 'string') return
     localStorage.setItem(k, v)
     rawCount++
   })
 
-  return { entries: entryCount, ddays: ddayList.length, raw: rawCount, version: payload.version }
+  return {
+    entries:      entryCount,
+    ddays:        ddayList.length,
+    settings:     settingsApplied,
+    shiftPattern: shiftApplied,
+    raw:          rawCount,
+    version:      payload.version,
+  }
 }
