@@ -48,7 +48,7 @@ export default function CalendarCell({ year, month, day, isCurrentMonth, shift, 
       onClick={() => isCurrentMonth && onTap?.({ year, month, day })}
       style={{
         position:   'relative',
-        background: today ? 'rgba(59,130,246,0.06)' : 'var(--color-surface)',
+        background: today ? 'rgba(59,130,246,0.18)' : 'var(--cal-cell-bg)',
         cursor:     isCurrentMonth ? 'pointer' : 'default',
         display:    'flex',
         flexDirection: 'column',

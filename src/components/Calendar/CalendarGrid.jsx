@@ -105,7 +105,7 @@ export default function CalendarGrid({
       <div style={{
         display:'grid',
         gridTemplateColumns:`repeat(7,1fr) ${STAT_W}px`,
-        background:'#F1F5F9',
+        background:'var(--cal-header-bg)',
         borderBottom:'1px solid var(--color-border)',
         flexShrink:0,
       }}>
@@ -159,7 +159,7 @@ export default function CalendarGrid({
               {/* 주간 통계 열 */}
               <div style={{
                 borderLeft:'1px solid var(--color-border)',
-                background:'var(--color-surface)',
+                background:'var(--cal-stats-bg)',
                 minHeight:0,
                 overflow:'hidden',
               }}>
@@ -188,7 +188,7 @@ function Legend() {
     <div style={{
       display:'flex', alignItems:'center', justifyContent:'space-between',
       padding:'5px 10px',
-      background:'var(--color-surface)',
+      background:'var(--cal-legend-bg)',
       borderTop:'1px solid var(--color-border)',
       flexShrink:0,
     }}>

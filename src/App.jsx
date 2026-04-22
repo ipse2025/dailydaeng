@@ -39,6 +39,12 @@ export default function App() {
   const { ddays } = useDDays()
   const { bgImage } = useBgImage()
 
+  // 달력 영역 표면을 반투명으로 전환하는 글로벌 신호
+  // (globals.css 의 [data-bg-image="on"] 셀렉터가 --cal-*-bg 변수를 오버라이드)
+  useEffect(() => {
+    document.documentElement.setAttribute('data-bg-image', bgImage ? 'on' : 'off')
+  }, [bgImage])
+
   const weeks = buildCalendarGrid(year, month)
 
   const [activeCell,   setActiveCell]   = useState(null)

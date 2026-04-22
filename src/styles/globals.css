@@ -35,6 +35,28 @@
 
   /* 글자 크기 배율 */
   --font-scale: 1;
+
+  /* 달력 영역 표면 (셀/요일헤더/통계/범례) — 사용자 배경 이미지 활성 시 반투명으로 전환 */
+  --cal-cell-bg:   var(--color-surface);
+  --cal-header-bg: #F1F5F9;
+  --cal-stats-bg:  var(--color-surface);
+  --cal-legend-bg: var(--color-surface);
+}
+
+/* ── 사용자 배경 이미지 활성 시: 달력 표면을 반투명으로 → 한 장의 이미지가 일관되게 비침 ── */
+:root[data-bg-image="on"] {
+  --cal-cell-bg:   rgba(255, 255, 255, 0.55);
+  --cal-header-bg: rgba(241, 245, 249, 0.55);
+  --cal-stats-bg:  rgba(255, 255, 255, 0.55);
+  --cal-legend-bg: rgba(255, 255, 255, 0.65);
+}
+
+/* 다크 테마 + 배경 이미지 동시 활성: 어두운 반투명으로 */
+[data-theme="dark"][data-bg-image="on"] {
+  --cal-cell-bg:   rgba(30, 41, 59, 0.55);
+  --cal-header-bg: rgba(15, 23, 42, 0.55);
+  --cal-stats-bg:  rgba(30, 41, 59, 0.55);
+  --cal-legend-bg: rgba(30, 41, 59, 0.65);
 }
 
 /* ── 다크 테마 ──────────────────────────────────── */
