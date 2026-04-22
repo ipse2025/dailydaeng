@@ -5,6 +5,7 @@ import {
   normalizeScheduleItems, normalizeExpenseItems,
   sumExpenseItems,
 } from '../../utils/dateUtils'
+import { CloseIcon } from '../icons/AppIcons'
 
 export default function EntryModal({ date, entry, onSave, onClose }) {
   const { year, month, day } = date
@@ -99,7 +100,7 @@ export default function EntryModal({ date, entry, onSave, onClose }) {
           <span style={{ fontWeight:900, fontSize:`calc(16px * var(--font-scale))`, color:'var(--color-text1)' }}>
             {year}년 {month}월 {day}일
           </span>
-          <button onClick={onClose} style={{ fontSize:20, color:'var(--color-text2)', background:'none', border:'none', cursor:'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ color:'var(--color-text2)', background:'none', border:'none', cursor:'pointer', display:'inline-flex', padding:0 }} aria-label="닫기"><CloseIcon size={20} color="var(--color-text2)" /></button>
         </div>
 
         <div style={{ padding:'14px 18px', display:'flex', flexDirection:'column', gap:14 }}>

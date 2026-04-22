@@ -2,6 +2,7 @@ import { useState } from 'react'
 import dayjs from 'dayjs'
 import { useDDays } from '../../hooks/useDDays'
 import { calcDDay, formatDDay, calendarLabel, lunarToSolarMD } from '../../utils/ddayCalc'
+import { CloseIcon } from '../icons/AppIcons'
 
 const CURRENT_YEAR = dayjs().year()
 const YEAR_OPTIONS  = Array.from({ length: 21 }, (_, i) => CURRENT_YEAR - 2 + i)    // -2 ~ +18
@@ -57,9 +58,9 @@ export default function DDayDrawer({ onClose }) {
           <span style={{ fontWeight:900, fontSize:'calc(16px * var(--font-scale))', color:'var(--color-text1)' }}>
             📆 D-Day
           </span>
-          <button onClick={onClose}
-                  style={{ fontSize:20, background:'none', border:'none', cursor:'pointer',
-                           color:'var(--color-text2)', padding:4 }}>✕</button>
+          <button onClick={onClose} aria-label="닫기"
+                  style={{ background:'none', border:'none', cursor:'pointer',
+                           color:'var(--color-text2)', padding:4, display:'inline-flex' }}><CloseIcon size={20} color="var(--color-text2)" /></button>
         </div>
 
         {/* 목록 + 추가 영역 */}

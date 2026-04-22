@@ -1,3 +1,5 @@
+import { CloseIcon } from '../icons/AppIcons'
+
 // 인앱 배너 (알리미 트리거 후 화면 상단 표시).
 // 포지셔닝은 호출자가 담당 (App.jsx 가 wrapper 로 위치 지정).
 //
@@ -74,10 +76,10 @@ export default function InAppBanner({ icon, iconBg, accent, title, lines, count,
               style={{
                 width:36, height:36, flexShrink:0, padding:0,
                 background:'transparent', border:'none', cursor:'pointer',
-                color:'var(--color-text2)', fontSize:22, lineHeight:1, fontWeight:700,
+                color:'var(--color-text2)',
                 display:'flex', alignItems:'center', justifyContent:'center',
               }}>
-        ✕
+        <CloseIcon size={22} color="var(--color-text2)" />
       </button>
     </div>
   )

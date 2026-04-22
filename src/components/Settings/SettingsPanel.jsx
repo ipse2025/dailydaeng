@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { THEMES, BG_THEMES, FONT_SCALES } from '../../styles/theme'
 import { useBgImage } from '../../hooks/useBgImage'
+import { CloseIcon, CameraIcon } from '../icons/AppIcons'
 
 const SHIFT_TYPES = ['주','야','비','휴']
 const SHIFT_LABELS = { '주':'주간','야':'야간','비':'비번','휴':'휴무' }
@@ -63,7 +64,7 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
           display:'flex', justifyContent:'space-between', alignItems:'center',
         }}>
           <span style={{ fontWeight:700, color:'#fff', fontSize:`calc(14px * var(--font-scale))` }}>⚙ 화면 설정</span>
-          <button onClick={onClose} style={{ color:'#94A3B8', background:'none', border:'none', fontSize:18, cursor:'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ color:'#94A3B8', background:'none', border:'none', cursor:'pointer', display:'inline-flex', padding:0 }} aria-label="닫기"><CloseIcon size={18} color="#94A3B8" /></button>
         </div>
 
         <div style={{ padding:'14px 14px', display:'flex', flexDirection:'column', gap:16 }}>
@@ -115,12 +116,18 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
             )}
             <div style={{ display:'flex', gap:6, marginBottom:8 }}>
               <button onClick={handlePickFile} style={imgBtnStyle('var(--color-primary)', '#fff', 1)}>
-                📷 {bgImage ? '이미지 변경' : '이미지 선택'}
+                <span style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+                  <CameraIcon size={14} color="#fff" />
+                  {bgImage ? '이미지 변경' : '이미지 선택'}
+                </span>
               </button>
               {bgImage && (
                 <button onClick={() => { removeBgImage(); setBgImageError(null) }}
                         style={imgBtnStyle('#EF4444', '#fff', 0)}>
-                  ✕ 제거
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5 }}>
+                    <CloseIcon size={12} color="#fff" />
+                    제거
+                  </span>
                 </button>
               )}
             </div>

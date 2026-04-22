@@ -3,6 +3,7 @@ import { getSettings, saveSettings } from '../../api/settings'
 import { HOUR_OPTIONS, MINUTE_OPTIONS } from '../../utils/dateUtils'
 import { DEFAULT_NOTIFIER, normalizeNotifier } from '../../utils/notifier'
 import { CloverIcon, HeartIcon } from '../icons/NotifierIcons'
+import { CloseIcon } from '../icons/AppIcons'
 
 export default function BotPanel({ onClose }) {
   const [notifier, setNotifier] = useState(DEFAULT_NOTIFIER)
@@ -56,7 +57,7 @@ export default function BotPanel({ onClose }) {
               알리미 설정
             </span>
           </div>
-          <button onClick={onClose} style={{ fontSize:20, color:'var(--color-text2)', background:'none', border:'none', cursor:'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ color:'var(--color-text2)', background:'none', border:'none', cursor:'pointer', display:'inline-flex', padding:0 }} aria-label="닫기"><CloseIcon size={20} color="var(--color-text2)" /></button>
         </div>
 
         <div style={{ padding:'16px 18px', display:'flex', flexDirection:'column', gap:12 }}>

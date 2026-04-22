@@ -1,4 +1,5 @@
 import { formatAmount, normalizeExpenseItems } from '../../utils/dateUtils'
+import { CloseIcon } from '../icons/AppIcons'
 
 export default function MonthlyExpensesModal({ year, month, entries, onClose }) {
   // 월별 카테고리별 집계
@@ -24,7 +25,7 @@ export default function MonthlyExpensesModal({ year, month, entries, onClose }) 
 
         <div style={headerStyle}>
           <span style={titleStyle}>💵 {month}월 지출 통계</span>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+          <button onClick={onClose} style={{ ...closeBtn, display:'inline-flex', padding:0 }} aria-label="닫기"><CloseIcon size={20} color="var(--color-text2)" /></button>
         </div>
 
         <div style={{ padding:'14px 18px 18px', maxHeight:'60vh', overflowY:'auto' }}>

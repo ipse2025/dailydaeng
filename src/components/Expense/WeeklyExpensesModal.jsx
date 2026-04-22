@@ -1,4 +1,5 @@
 import { formatAmount, normalizeExpenseItems, toDateKey } from '../../utils/dateUtils'
+import { CloseIcon } from '../icons/AppIcons'
 
 const DOW_LABELS = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일']
 
@@ -24,7 +25,7 @@ export default function WeeklyExpensesModal({ weekNum, weekDays, entries, onClos
 
         <div style={headerStyle}>
           <span style={titleStyle}>📊 {weekNum}주 지출 내역</span>
-          <button onClick={onClose} style={closeBtn}>✕</button>
+          <button onClick={onClose} style={{ ...closeBtn, display:'inline-flex', padding:0 }} aria-label="닫기"><CloseIcon size={20} color="var(--color-text2)" /></button>
         </div>
 
         <div style={{ padding:'12px 18px 18px', maxHeight:'60vh', overflowY:'auto' }}>
