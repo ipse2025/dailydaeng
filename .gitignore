@@ -28,3 +28,8 @@ desktop.ini
 .cache/
 .parcel-cache/
 .eslintcache
+
+# UI 변경 작업 시 생성하는 일회성 mockup 이미지/스크립트
+preview_before_*.png
+preview_after_*.png
+scripts/gen_preview_*.py
