@@ -25,6 +25,8 @@ import MonthlyExpensesModal from './components/Expense/MonthlyExpensesModal'
 import InAppBanner          from './components/Notifier/InAppBanner'
 import DDayDrawer           from './components/DDay/DDayDrawer'
 import BackupButton         from './components/Backup/BackupButton'
+import BackgroundLayer      from './components/Background/BackgroundLayer'
+import { useBgImage }       from './hooks/useBgImage'
 import { CloverIcon, HeartIcon } from './components/icons/NotifierIcons'
 
 export default function App() {
@@ -35,6 +37,7 @@ export default function App() {
   const { shiftMap, shiftConfig, applyShift } = useShiftPattern(year, month, holidays)
   const { settings, updateSettings } = useSettings()
   const { ddays } = useDDays()
+  const { bgImage } = useBgImage()
 
   const weeks = buildCalendarGrid(year, month)
 
@@ -120,8 +123,11 @@ export default function App() {
   }, [entries, year, month])
 
   return (
+    <>
+    <BackgroundLayer bgImage={bgImage} opacity={settings?.bgImageOpacity ?? 0.3} />
     <div style={{ height:'100dvh', display:'flex', flexDirection:'column',
-                  background:'var(--color-bg)', overflow:'hidden',
+                  background:'transparent', overflow:'hidden',
+                  position:'relative', zIndex:10,
                   paddingTop:  'env(safe-area-inset-top)',
                   paddingLeft: 'env(safe-area-inset-left)',
                   paddingRight:'env(safe-area-inset-right)',
@@ -252,6 +258,7 @@ export default function App() {
         <div style={{ position:'fixed', inset:0, zIndex:15 }} onClick={closeDropdowns} />
       )}
     </div>
+    </>
   )
 }
 

@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { THEMES, BG_THEMES, FONT_SCALES } from '../../styles/theme'
+import { useBgImage } from '../../hooks/useBgImage'
 
 const SHIFT_TYPES = ['주','야','비','휴']
 const SHIFT_LABELS = { '주':'주간','야':'야간','비':'비번','휴':'휴무' }
 
 export default function SettingsPanel({ settings, onUpdate, onClose }) {
   const [local, setLocal] = useState({ ...settings })
+  const { bgImage, setFromFile, remove: removeBgImage } = useBgImage()
+  const fileInputRef = useRef(null)
+  const [bgImageError, setBgImageError] = useState(null)
 
   const set = (key, val) => setLocal(prev => ({ ...prev, [key]: val }))
 
@@ -22,6 +26,17 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
   const handleApply = () => {
     onUpdate(local)
     onClose()
+  }
+
+  const opacityPct = Math.round((local.bgImageOpacity ?? 0.3) * 100)
+  const handlePickFile = () => fileInputRef.current?.click()
+  const handleFileChange = async (e) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''   // 같은 파일 재선택 가능하도록
+    if (!f) return
+    setBgImageError(null)
+    try { await setFromFile(f) }
+    catch (err) { setBgImageError(err.message) }
   }
 
   return (
@@ -82,6 +97,60 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
                           cursor:'pointer',
                         }} title={t.label} />
               ))}
+            </div>
+          </Section>
+
+          <Divider />
+
+          {/* 배경 이미지 */}
+          <Section title="배경 이미지">
+            {bgImage && (
+              <div style={{
+                width:'100%', aspectRatio:'16/10', borderRadius:8,
+                marginBottom:8, overflow:'hidden',
+                border:'1px solid var(--color-border)',
+                backgroundImage:`url(${bgImage})`,
+                backgroundSize:'cover', backgroundPosition:'center',
+              }} />
+            )}
+            <div style={{ display:'flex', gap:6, marginBottom:8 }}>
+              <button onClick={handlePickFile} style={imgBtnStyle('var(--color-primary)', '#fff', 1)}>
+                📷 {bgImage ? '이미지 변경' : '이미지 선택'}
+              </button>
+              {bgImage && (
+                <button onClick={() => { removeBgImage(); setBgImageError(null) }}
+                        style={imgBtnStyle('#EF4444', '#fff', 0)}>
+                  ✕ 제거
+                </button>
+              )}
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*"
+                   onChange={handleFileChange} style={{ display:'none' }} />
+
+            {bgImageError && (
+              <div style={{ fontSize:11, color:'#EF4444', marginBottom:8 }}>
+                {bgImageError}
+              </div>
+            )}
+
+            {/* 투명도 */}
+            <div style={{ marginTop:6 }}>
+              <div style={{ display:'flex', justifyContent:'space-between',
+                            fontSize:`calc(11px * var(--font-scale))`,
+                            color:'var(--color-text2)', marginBottom:4 }}>
+                <span>투명도</span>
+                <span style={{ fontWeight:700, color:'var(--color-text1)' }}>{opacityPct}%</span>
+              </div>
+              <input
+                type="range" min={10} max={100} step={5}
+                value={opacityPct}
+                onChange={e => set('bgImageOpacity', parseInt(e.target.value, 10) / 100)}
+                style={{ width:'100%', accentColor:'var(--color-primary)' }}
+              />
+              <div style={{ display:'flex', justifyContent:'space-between',
+                            fontSize:10, color:'var(--color-text3)', marginTop:2 }}>
+                <span>10%</span><span>100%</span>
+              </div>
             </div>
           </Section>
 
@@ -220,4 +289,14 @@ function Stepper({ value, min, max, step, onChange }) {
 const colorPickerStyle = {
   width:28, height:22, padding:0, border:'1px solid var(--color-border)',
   borderRadius:4, cursor:'pointer', background:'none',
+}
+
+function imgBtnStyle(bg, color, flex) {
+  return {
+    flex: flex || 'none',
+    padding:'8px 10px', borderRadius:8,
+    background:bg, color, border:'none', cursor:'pointer',
+    fontWeight:600, fontSize:`calc(11px * var(--font-scale))`,
+    whiteSpace:'nowrap',
+  }
 }

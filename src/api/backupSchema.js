@@ -22,6 +22,13 @@ const KEY_SHIFT_PATTERN = store.PREFIX + 'shiftPattern'  // dailydaeng.shiftPatt
 
 const EXPLICIT_KEYS = new Set([KEY_ENTRIES, KEY_DDAYS, KEY_SETTINGS, KEY_SHIFT_PATTERN])
 
+// 백업/복원 양쪽에서 무시할 키들 (기기 로컬 데이터)
+// - 배경 이미지: 용량 크고 기기별 화면에 맞게 고른 것이라 백업 제외
+const BLACKLIST_KEYS = new Set([
+  store.PREFIX + 'bgImage',
+  store.PREFIX + 'oauth.token',  // 인증 토큰도 기기 로컬
+])
+
 // ── entry 정규화 ──────────────────────────────────────────
 // 알려지지 않은 필드까지 보존하면서, legacy 필드를 표준 필드로 마이그레이션
 function sanitizeEntry(raw) {
@@ -120,7 +127,8 @@ export function buildBackupPayload() {
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i)
     if (!k || !k.startsWith(store.PREFIX)) continue
-    if (EXPLICIT_KEYS.has(k)) continue  // 명시 영역과 중복 방지
+    if (EXPLICIT_KEYS.has(k))  continue  // 명시 영역과 중복 방지
+    if (BLACKLIST_KEYS.has(k)) continue  // 백업 제외 키
     raw[k] = localStorage.getItem(k)
   }
 
@@ -171,7 +179,9 @@ function clearAllAppKeys() {
   const toRemove = []
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i)
-    if (k && k.startsWith(store.PREFIX)) toRemove.push(k)
+    if (!k || !k.startsWith(store.PREFIX)) continue
+    if (BLACKLIST_KEYS.has(k)) continue  // 기기 로컬 데이터는 복원으로 지우지 않음
+    toRemove.push(k)
   }
   toRemove.forEach(k => localStorage.removeItem(k))
 }
@@ -183,10 +193,11 @@ function applyV1(payload) {
   clearAllAppKeys()
   let count = 0
   Object.entries(payload.data).forEach(([k, v]) => {
-    if (k.startsWith(store.PREFIX) && typeof v === 'string') {
-      localStorage.setItem(k, v)
-      count++
-    }
+    if (typeof k !== 'string' || !k.startsWith(store.PREFIX)) return
+    if (BLACKLIST_KEYS.has(k)) return
+    if (typeof v !== 'string') return
+    localStorage.setItem(k, v)
+    count++
   })
   // v1을 v2 명시 영역에 맞춰 정규화 (legacy 필드 마이그레이션)
   try {
@@ -251,11 +262,12 @@ function applyV2(payload) {
     shiftApplied = 1
   }
 
-  // raw: 명시 영역 키는 무시 (이중 적용 방지)
+  // raw: 명시 영역 키는 무시 (이중 적용 방지) + blacklist 키도 무시
   let rawCount = 0
   Object.entries(raw).forEach(([k, v]) => {
     if (typeof k !== 'string' || !k.startsWith(store.PREFIX)) return
-    if (EXPLICIT_KEYS.has(k)) return
+    if (EXPLICIT_KEYS.has(k))  return
+    if (BLACKLIST_KEYS.has(k)) return
     if (typeof v !== 'string') return
     localStorage.setItem(k, v)
     rawCount++
