@@ -50,8 +50,22 @@ export function readBgImage() {
 export function writeBgImage(dataUrl) {
   try { localStorage.setItem(BG_IMAGE_KEY, dataUrl) }
   catch (e) { throw new Error('저장 공간이 부족합니다. 더 작은 이미지를 사용해 주세요.') }
+  notify()
 }
 
 export function clearBgImage() {
   try { localStorage.removeItem(BG_IMAGE_KEY) } catch (_) {}
+  notify()
+}
+
+// 같은 탭 안의 여러 useBgImage 인스턴스 동기화용 pub/sub
+// (storage 이벤트는 같은 탭에서는 발화하지 않으므로 별도 채널 필요)
+const listeners = new Set()
+function notify() {
+  const v = readBgImage()
+  listeners.forEach(fn => { try { fn(v) } catch (_) {} })
+}
+export function subscribeBgImage(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
 }
