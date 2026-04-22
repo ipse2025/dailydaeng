@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useGoogleDrive } from '../../hooks/useGoogleDrive'
 import { uploadBackup, downloadBackup, applyBackupData } from '../../api/backup'
+import { BackupIcon, UploadIcon, DownloadIcon } from '../icons/AppIcons'
 
 export default function BackupButton({ haptic }) {
   const [open, setOpen]       = useState(false)
@@ -86,7 +87,7 @@ export default function BackupButton({ haptic }) {
           fontFamily:"'Noto Sans KR',sans-serif", flexShrink:0,
           opacity: busy ? 0.6 : 1,
         }}
-      >☁</button>
+      ><BackupIcon size={16} color="#fff" /></button>
 
       {open && (
         <>
@@ -98,8 +99,8 @@ export default function BackupButton({ haptic }) {
             borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.12)',
             padding:6, minWidth:150,
           }}>
-            <MenuItem icon="📤" label="내보내기"   desc="Drive에 백업" onClick={handleExport} />
-            <MenuItem icon="📥" label="가져오기"   desc="Drive에서 복원" onClick={handleImport} />
+            <MenuItem icon={<UploadIcon   size={18} color="#0EA5E9" />} label="내보내기" desc="Drive에 백업"   onClick={handleExport} />
+            <MenuItem icon={<DownloadIcon size={18} color="#0EA5E9" />} label="가져오기" desc="Drive에서 복원" onClick={handleImport} />
           </div>
         </>
       )}

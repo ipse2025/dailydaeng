@@ -28,6 +28,10 @@ import BackupButton         from './components/Backup/BackupButton'
 import BackgroundLayer      from './components/Background/BackgroundLayer'
 import { useBgImage }       from './hooks/useBgImage'
 import { CloverIcon, HeartIcon } from './components/icons/NotifierIcons'
+import {
+  ShiftIcon, SettingsIcon, ExpenseIcon,
+  ChevronUpIcon, ChevronDownIcon,
+} from './components/icons/AppIcons'
 
 export default function App() {
   const { haptic }                   = useTelegramSDK()
@@ -165,7 +169,11 @@ export default function App() {
             <span style={{ fontWeight:900, fontSize:`calc(19px * var(--font-scale))`, color:'var(--color-text1)' }}>
               {year}.{String(month).padStart(2,'0')}
             </span>
-            <span style={{ color:'var(--color-primary)', fontSize:12 }}>{showPicker?'▲':'▼'}</span>
+            <span style={{ color:'var(--color-primary)', display:'inline-flex' }}>
+              {showPicker
+                ? <ChevronUpIcon   size={12} color="var(--color-primary)" />
+                : <ChevronDownIcon size={12} color="var(--color-primary)" />}
+            </span>
           </button>
           <div style={{ height:2, background:'var(--color-primary)', opacity:0.2, borderRadius:1 }} />
           {showPicker && (
@@ -178,14 +186,14 @@ export default function App() {
         {/* 우측 버튼 5개 */}
         <div style={{ display:'flex', gap:3, position:'relative' }}>
           <div style={{ position:'relative' }}>
-            <Btn bg="var(--color-primary)" onClick={()=>{ haptic(); setShowPicker(false); setShowShift(v=>!v) }}>📅</Btn>
+            <Btn bg="var(--color-primary)" onClick={()=>{ haptic(); setShowPicker(false); setShowShift(v=>!v) }}><ShiftIcon size={18} /></Btn>
             {showShift && (
               <ShiftSetupPanel shiftConfig={shiftConfig}
                 onApply={cfg=>{ applyShift(cfg); setShowShift(false) }}
                 onClose={()=>setShowShift(false)} />
             )}
           </div>
-          <Btn bg="#9CA3AF" onClick={()=>{ haptic(); closeDropdowns(); setShowSettings(true) }}>⚙</Btn>
+          <Btn bg="#9CA3AF" onClick={()=>{ haptic(); closeDropdowns(); setShowSettings(true) }}><SettingsIcon size={18} /></Btn>
           <IconBtn src="/alarm/icon-96.png" alt="알리미 설정"
                    onClick={()=>{ haptic(); closeDropdowns(); setShowBot(true) }} />
           <DollarBtn total={monthlyTotal}
@@ -303,7 +311,7 @@ function DollarBtn({ total, onClick }) {
       fontFamily:"'Noto Sans KR',sans-serif", flexShrink:0, lineHeight:1, gap:1,
       padding: 0,
     }}>
-      <span style={{ fontSize:13, fontWeight:900 }}>$</span>
+      <ExpenseIcon size={14} color="#fff" />
       <span style={{ fontSize:6, fontWeight:700 }}>{shortTotal(total)}</span>
     </button>
   )
