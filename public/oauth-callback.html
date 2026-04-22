@@ -15,25 +15,53 @@
   <p>인증 완료. 창이 자동으로 닫힙니다.</p>
   <script>
   (function () {
+    var STORAGE_KEY = 'dailydaeng_oauth_response'
+    var MSG_TYPE    = 'dailydaeng_oauth_response'
+
+    var hash = window.location.hash ? window.location.hash.substring(1) : ''
+    var params = new URLSearchParams(hash)
+    var payload = {
+      type:         MSG_TYPE,
+      state:        params.get('state'),
+      access_token: params.get('access_token'),
+      token_type:   params.get('token_type'),
+      expires_in:   params.get('expires_in'),
+      error:        params.get('error') || params.get('error_description'),
+      ts:           Date.now()
+    }
+
+    // 채널 1: localStorage (storage 이벤트는 다른 창에서 trigger됨)
     try {
-      var hash = window.location.hash ? window.location.hash.substring(1) : ''
-      var params = new URLSearchParams(hash)
-      var payload = {
-        type:         'dailydaeng_oauth_response',
-        state:        params.get('state'),
-        access_token: params.get('access_token'),
-        token_type:   params.get('token_type'),
-        expires_in:   params.get('expires_in'),
-        error:        params.get('error') || params.get('error_description'),
-      }
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(payload, window.location.origin)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    } catch (e) {
+      console.error('localStorage write failed:', e)
+    }
+
+    // 채널 2: postMessage (opener가 살아있으면 즉시 전달)
+    try {
+      var opener = null
+      try { opener = window.opener } catch (_) {}
+      if (opener) {
+        try { opener.postMessage(payload, window.location.origin) } catch (e) {
+          console.error('postMessage failed:', e)
+        }
       }
     } catch (e) {
-      console.error('oauth-callback error:', e)
-    } finally {
-      setTimeout(function () { window.close() }, 300)
+      console.error('opener access failed:', e)
     }
+
+    // 채널 3: BroadcastChannel (같은 origin 간 통신, COOP에 영향 안 받음)
+    try {
+      if ('BroadcastChannel' in window) {
+        var bc = new BroadcastChannel('dailydaeng_oauth')
+        bc.postMessage(payload)
+        setTimeout(function () { try { bc.close() } catch (_) {} }, 100)
+      }
+    } catch (e) {
+      console.error('BroadcastChannel failed:', e)
+    }
+
+    setTimeout(function () { window.close() }, 300)
   })()
   </script>
 </body>
