@@ -133,6 +133,31 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
               </div>
             )}
 
+            {/* 표시 방식 (fit) */}
+            <div style={{ marginTop:6, marginBottom:10 }}>
+              <div style={{ fontSize:`calc(11px * var(--font-scale))`,
+                            color:'var(--color-text2)', marginBottom:4 }}>
+                표시 방식
+              </div>
+              <select
+                value={local.bgImageFit ?? 'contain'}
+                onChange={e => set('bgImageFit', e.target.value)}
+                style={{
+                  width:'100%', padding:'8px 10px', borderRadius:8,
+                  border:'1px solid var(--color-border)',
+                  background:'var(--color-surface)',
+                  color:'var(--color-text1)',
+                  fontSize:`calc(12px * var(--font-scale))`,
+                  cursor:'pointer',
+                }}
+              >
+                <option value="contain">전체 보기 (한 화면 안에 다 보임)</option>
+                <option value="cover">꽉 채우기 (가장자리 잘림)</option>
+                <option value="100% 100%">늘려서 맞춤 (왜곡 가능)</option>
+                <option value="auto">원본 크기</option>
+              </select>
+            </div>
+
             {/* 투명도 */}
             <div style={{ marginTop:6 }}>
               <div style={{ display:'flex', justifyContent:'space-between',

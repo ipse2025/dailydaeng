@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   fontScale: 1,
   badges: DEFAULT_BADGES,
   bgImageOpacity: 0.3,   // 사용자 배경 이미지 투명도 (이미지 자체는 별도 키 dailydaeng.bgImage)
+  bgImageFit: 'contain', // 배경 이미지 표시 방식 (contain | cover | 100% 100% | auto)
 }
 
 // 저장된 badges 를 기본값과 병합. outline/outlineW 가 완전히 누락이면 default

@@ -130,7 +130,8 @@ export default function App() {
 
   return (
     <>
-    <BackgroundLayer bgImage={bgImage} opacity={settings?.bgImageOpacity ?? 0.3} />
+    <BackgroundLayer bgImage={bgImage} opacity={settings?.bgImageOpacity ?? 0.3}
+                     fit={settings?.bgImageFit ?? 'contain'} />
     <div style={{ height:'100dvh', display:'flex', flexDirection:'column',
                   background:'transparent', overflow:'hidden',
                   position:'relative', zIndex:10,
