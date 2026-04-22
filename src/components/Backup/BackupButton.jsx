@@ -9,11 +9,24 @@ export default function BackupButton({ haptic }) {
   const [toast, setToast]     = useState(null)     // { type:'ok'|'err', msg }
   const [confirmImport, setConfirmImport] = useState(null)  // payload
 
-  const { requestAccessToken } = useGoogleDrive()
+  const { requestAccessToken, clearCachedToken } = useGoogleDrive()
 
   const showToast = (type, msg, ms = 3000) => {
     setToast({ type, msg })
     setTimeout(() => setToast(null), ms)
+  }
+
+  // 캐시 토큰이 서버에서 무효화된 경우(401) → 캐시 비우고 새 토큰으로 1회 재시도
+  const withAuthRetry = async (fn) => {
+    let token = await requestAccessToken()
+    try {
+      return await fn(token)
+    } catch (e) {
+      if (!/\b401\b/.test(e.message)) throw e
+      clearCachedToken()
+      token = await requestAccessToken()
+      return await fn(token)
+    }
   }
 
   const handleExport = async () => {
@@ -21,9 +34,8 @@ export default function BackupButton({ haptic }) {
     if (busy) return
     setBusy(true)
     try {
-      const token = await requestAccessToken()
-      const res   = await uploadBackup(token)
-      const when  = new Date(res.at).toLocaleString('ko-KR')
+      const res  = await withAuthRetry((token) => uploadBackup(token))
+      const when = new Date(res.at).toLocaleString('ko-KR')
       showToast('ok', `Drive에 백업됨 · ${when}`)
     } catch (e) {
       showToast('err', `내보내기 실패: ${e.message}`)
@@ -37,8 +49,7 @@ export default function BackupButton({ haptic }) {
     if (busy) return
     setBusy(true)
     try {
-      const token   = await requestAccessToken()
-      const payload = await downloadBackup(token)
+      const payload = await withAuthRetry((token) => downloadBackup(token))
       if (!payload) {
         showToast('err', 'Drive에 백업 파일이 없습니다.')
         return
