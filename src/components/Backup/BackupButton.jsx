@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useGoogleDrive } from '../../hooks/useGoogleDrive'
 import { uploadBackup, downloadBackup, applyBackupData } from '../../api/backup'
+import { isSheetSyncEnabled, syncSheet } from '../../api/sheetBackup'
 import { BackupIcon, UploadIcon, DownloadIcon } from '../icons/AppIcons'
 
 export default function BackupButton({ haptic }) {
@@ -37,7 +38,18 @@ export default function BackupButton({ haptic }) {
     try {
       const res  = await withAuthRetry((token) => uploadBackup(token))
       const when = new Date(res.at).toLocaleString('ko-KR')
-      showToast('ok', `Drive에 백업됨 · ${when}`)
+
+      // Sheet 동기화 (옵션) — JSON 백업과 독립적으로 try/catch
+      let sheetTail = ''
+      if (isSheetSyncEnabled()) {
+        try {
+          const r = await withAuthRetry((token) => syncSheet(token))
+          sheetTail = ` + Sheet ${r.rowCount}행`
+        } catch (se) {
+          sheetTail = ` (Sheet 실패: ${se.message})`
+        }
+      }
+      showToast('ok', `Drive에 백업됨${sheetTail} · ${when}`, 4500)
     } catch (e) {
       showToast('err', `내보내기 실패: ${e.message}`)
     } finally {

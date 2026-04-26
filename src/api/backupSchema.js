@@ -26,7 +26,10 @@ const EXPLICIT_KEYS = new Set([KEY_ENTRIES, KEY_DDAYS, KEY_SETTINGS, KEY_SHIFT_P
 // - 배경 이미지: 용량 크고 기기별 화면에 맞게 고른 것이라 백업 제외
 const BLACKLIST_KEYS = new Set([
   store.PREFIX + 'bgImage',
-  store.PREFIX + 'oauth.token',  // 인증 토큰도 기기 로컬
+  store.PREFIX + 'oauth.token',              // 인증 토큰도 기기 로컬
+  store.PREFIX + 'sheetBackup.enabled',      // Sheet 동기화 ON/OFF (기기별)
+  store.PREFIX + 'sheetBackup.fileId',       // 생성된 스프레드시트 ID (기기별)
+  store.PREFIX + 'sheetBackup.lastSyncAt',   // 마지막 동기화 시각
 ])
 
 // ── entry 정규화 ──────────────────────────────────────────

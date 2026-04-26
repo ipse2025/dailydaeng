@@ -8,7 +8,9 @@
 // - login_hint 지정 → 계정 선택 화면 스킵
 
 const CLIENT_ID     = import.meta.env.VITE_GOOGLE_CLIENT_ID
-const SCOPE         = 'https://www.googleapis.com/auth/drive.appdata'
+// drive.appdata: 기존 JSON 백업 (앱 전용 숨김 폴더)
+// spreadsheets:   추가된 Sheet 동기화 (사용자가 Drive에서 직접 보고 외부 에이전트가 읽기 위함)
+const SCOPE         = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/spreadsheets'
 const REDIRECT_PATH = '/oauth-callback.html'
 const MSG_TYPE      = 'dailydaeng_oauth_response'
 const STORAGE_KEY   = 'dailydaeng_oauth_response'

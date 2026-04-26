@@ -1,6 +1,12 @@
 import { useState, useRef } from 'react'
 import { THEMES, BG_THEMES, FONT_SCALES } from '../../styles/theme'
 import { useBgImage } from '../../hooks/useBgImage'
+import { useGoogleDrive } from '../../hooks/useGoogleDrive'
+import {
+  isSheetSyncEnabled, setSheetSyncEnabled,
+  getSheetFileId, getSheetUrl, getLastSyncAt,
+  syncSheet, recreateSheet,
+} from '../../api/sheetBackup'
 import { CloseIcon, CameraIcon } from '../icons/AppIcons'
 
 const SHIFT_TYPES = ['주','야','비','휴']
@@ -188,6 +194,13 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
 
           <Divider />
 
+          {/* Sheet 동기화 */}
+          <Section title="Sheet 동기화">
+            <SheetSyncControls />
+          </Section>
+
+          <Divider />
+
           {/* 글자 크기 */}
           <Section title="글자 크기">
             <input
@@ -266,6 +279,168 @@ export default function SettingsPanel({ settings, onUpdate, onClose }) {
       </div>
     </div>
   )
+}
+
+function SheetSyncControls() {
+  const [enabled,    setEnabled]    = useState(isSheetSyncEnabled())
+  const [fileId,     setFileId]     = useState(getSheetFileId())
+  const [lastSyncAt, setLastSyncAt] = useState(getLastSyncAt())
+  const [busy,       setBusy]       = useState(false)
+  const [msg,        setMsg]        = useState(null)
+  const { requestAccessToken, clearCachedToken } = useGoogleDrive()
+
+  const sheetUrl = getSheetUrl()
+  const lastWhen = lastSyncAt ? new Date(lastSyncAt).toLocaleString('ko-KR') : null
+
+  const flash = (type, text, ms = 3500) => {
+    setMsg({ type, text })
+    setTimeout(() => setMsg(null), ms)
+  }
+
+  const withAuthRetry = async (fn) => {
+    let token = await requestAccessToken()
+    try {
+      return await fn(token)
+    } catch (e) {
+      if (!/\b401\b/.test(e.message)) throw e
+      clearCachedToken()
+      token = await requestAccessToken()
+      return await fn(token)
+    }
+  }
+
+  const toggle = (v) => {
+    setSheetSyncEnabled(v)
+    setEnabled(v)
+    if (v) flash('ok', '다음 백업부터 시트에도 동시 저장됩니다.')
+  }
+
+  const runSync = async (fn, okMsg) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const r = await withAuthRetry(fn)
+      setFileId(r.fileId)
+      setLastSyncAt(r.at)
+      flash('ok', `${okMsg} (${r.rowCount}행)`)
+    } catch (e) {
+      flash('err', `실패: ${e.message}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleCreateOrSync = () => runSync((t) => syncSheet(t), fileId ? '동기화 완료' : '시트 생성 완료')
+  const handleRecreate     = () => runSync((t) => recreateSheet(t), '시트 재생성 완료')
+
+  return (
+    <div style={{
+      padding:'10px', borderRadius:10, background:'var(--color-bg)',
+      border:'1px solid var(--color-border)',
+    }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: enabled ? 10 : 4 }}>
+        <span style={{ fontSize:`calc(11px * var(--font-scale))`, color:'var(--color-text2)' }}>
+          동기화 사용
+        </span>
+        <Toggle checked={enabled} onChange={toggle} />
+      </div>
+
+      {enabled && sheetUrl && (
+        <div style={{ marginBottom:10 }}>
+          <div style={{ fontSize:`calc(11px * var(--font-scale))`, color:'var(--color-text2)', marginBottom:3 }}>
+            스프레드시트
+          </div>
+          <a href={sheetUrl} target="_blank" rel="noopener noreferrer"
+             style={{
+               fontSize:`calc(12px * var(--font-scale))`, fontWeight:700,
+               color:'var(--color-primary)', textDecoration:'none',
+               wordBreak:'break-all',
+             }}>
+            Daily댕 백업 ↗
+          </a>
+        </div>
+      )}
+
+      {enabled && lastWhen && (
+        <div style={{ marginBottom:10 }}>
+          <div style={{ fontSize:`calc(11px * var(--font-scale))`, color:'var(--color-text2)', marginBottom:3 }}>
+            마지막 동기화
+          </div>
+          <div style={{ fontSize:`calc(12px * var(--font-scale))`, fontWeight:700, color:'var(--color-text1)' }}>
+            {lastWhen}
+          </div>
+        </div>
+      )}
+
+      {enabled && (
+        <div style={{ display:'flex', gap:6 }}>
+          <button onClick={handleCreateOrSync} disabled={busy}
+                  style={sheetBtn('var(--color-primary)', '#fff', 1, busy, false)}>
+            {busy ? '동기화 중...' : (fileId ? '지금 동기화' : '시트 만들기')}
+          </button>
+          {fileId && (
+            <button onClick={handleRecreate} disabled={busy}
+                    style={sheetBtn('var(--color-surface)', 'var(--color-text1)', 0, busy, true)}>
+              시트 재생성
+            </button>
+          )}
+        </div>
+      )}
+
+      {msg && (
+        <div style={{
+          marginTop:10, padding:'6px 8px', borderRadius:6,
+          background: msg.type === 'ok' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+          color:      msg.type === 'ok' ? '#047857' : '#B91C1C',
+          fontSize:`calc(11px * var(--font-scale))`,
+        }}>
+          {msg.text}
+        </div>
+      )}
+
+      {!enabled && (
+        <div style={{ fontSize:`calc(10px * var(--font-scale))`, color:'var(--color-text3)', marginTop:4, lineHeight:1.4 }}>
+          켜면 ☁ 백업 시 시트에도 동시 저장됩니다. (외부 에이전트가 일정·운동·지출을 읽기 위함)
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Toggle({ checked, onChange }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      style={{
+        width:38, height:20, borderRadius:10,
+        background: checked ? 'var(--color-primary)' : '#CBD5E1',
+        border:'none', cursor:'pointer', position:'relative', padding:0,
+        transition:'background 0.15s',
+      }}
+    >
+      <span style={{
+        position:'absolute', top:2, left: checked ? 20 : 2,
+        width:16, height:16, borderRadius:'50%', background:'#fff',
+        boxShadow:'0 1px 2px rgba(0,0,0,0.2)',
+        transition:'left 0.15s',
+      }} />
+    </button>
+  )
+}
+
+function sheetBtn(bg, color, flex, disabled, outlined) {
+  return {
+    flex: flex || 'none',
+    padding:'8px 10px', borderRadius:8,
+    background:bg, color,
+    border: outlined ? '1px solid var(--color-border)' : 'none',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontWeight:600, fontSize:`calc(11px * var(--font-scale))`,
+    whiteSpace:'nowrap',
+    opacity: disabled ? 0.6 : 1,
+  }
 }
 
 function Section({ title, children }) {
