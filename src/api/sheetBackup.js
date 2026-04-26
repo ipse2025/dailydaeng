@@ -10,7 +10,6 @@ import { store } from './localStore'
 import { HEADER, SHEET_TAB, buildSheetRows } from './sheetSchema'
 
 const SHEETS_API   = 'https://sheets.googleapis.com/v4/spreadsheets'
-const DRIVE_API    = 'https://www.googleapis.com/drive/v3/files'
 const SHEET_TITLE  = 'Daily댕 백업'
 
 const KEY_ENABLED   = 'sheetBackup.enabled'
@@ -51,16 +50,6 @@ export function getSheetUrl() {
   return id ? `https://docs.google.com/spreadsheets/d/${id}/edit` : null
 }
 
-// ── 파일 존재 확인 (휴지통 등으로 삭제된 경우 fileId 무효화) ──
-async function isFileAlive(token, id) {
-  if (!id) return false
-  const r = await fetch(`${DRIVE_API}/${id}?fields=id,trashed`, { headers: authHeaders(token) })
-  if (r.status === 404) return false
-  if (!r.ok) throw new Error(`시트 확인 실패 (${r.status})`)
-  const j = await r.json()
-  return !j.trashed
-}
-
 // ── 새 스프레드시트 생성 (탭 이름 'data', 컬럼 너비는 기본) ──
 async function createSheet(token) {
   const body = {
@@ -78,17 +67,13 @@ async function createSheet(token) {
   return j.spreadsheetId
 }
 
-// 시트 ID 가 없거나 무효화됐으면 새로 만든다
+// 시트 ID 가 없으면 새로 만든다.
+// 휴지통/삭제 케이스는 검증하지 않음 — drive.appdata+spreadsheets scope 로는 일반
+// Drive 파일에 GET 권한이 없어 검증이 항상 실패(404)했고, 그 결과 매 백업마다
+// 새 시트가 생성되는 버그가 있었음. 시트 무효화 시엔 clearSheet/writeAllValues
+// 가 자연스럽게 실패하므로, 사용자가 "시트 재생성" 버튼으로 복구하면 된다.
 export async function ensureSheet(token) {
   let id = getSheetFileId()
-  if (id) {
-    try {
-      const alive = await isFileAlive(token, id)
-      if (!alive) id = null
-    } catch (_) {
-      // 일시적 네트워크 오류 등은 그대로 진행 (다음 단계에서 재확인)
-    }
-  }
   if (!id) {
     id = await createSheet(token)
     setSheetFileId(id)
