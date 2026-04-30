@@ -1,0 +1,42 @@
+name: 공휴일 자동 갱신
+
+on:
+  schedule:
+    # 매월 1일 18:00 UTC = 매월 2일 03:00 KST
+    - cron: '0 18 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 공휴일 데이터 갱신
+        run: node scripts/update-holidays.mjs
+
+      - name: 변경사항 커밋 & 푸시
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 헤더의 "최종 갱신" 날짜만 바뀐 경우는 의미 없는 커밋이므로,
+          # 실제 데이터(HOLIDAYS = ... 본문) 변경이 있을 때만 커밋한다.
+          if git diff --quiet -I '^// scripts/update-holidays.mjs' src/api/holidaysData.js; then
+            echo "공휴일 데이터 변경 없음 — 커밋 생략"
+            # 헤더만 바뀐 변경사항은 되돌림
+            git checkout -- src/api/holidaysData.js
+          else
+            git add src/api/holidaysData.js
+            git commit -m "chore(holidays): 공휴일 데이터 자동 갱신"
+            git push
+          fi
