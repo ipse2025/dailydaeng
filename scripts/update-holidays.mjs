@@ -26,31 +26,12 @@ const argYearMax = parseInt(process.argv[3], 10)
 const YEAR_MIN = Number.isFinite(argYearMin) ? argYearMin : 2023
 const YEAR_MAX = Number.isFinite(argYearMax) ? argYearMax : now.getFullYear() + 6
 
-// 대한민국 **법정공휴일** 만 추림 (피드에 포함된 기념일 제외).
-// 이름에 아래 키워드 중 하나라도 포함되면 통과.
-const LEGAL_KEYWORDS = [
-  '새해', '신정',
-  '설날', '설 연휴',
-  '삼일절', '3·1', '3.1',
-  '어린이날',
-  '부처님', '석가',
-  '현충일',
-  '광복절',
-  '추석',
-  '개천절',
-  '한글날',
-  '성탄', '크리스마스', '기독탄신',
-  '대체공휴일', '대체 휴일', '대체휴일',
-  '임시공휴일',
-  '선거', '투표일',
-]
-// 위 키워드에 매칭되더라도 아래가 포함되면 제외 (이브·전야 등 보조 기념일)
-const EXCLUDE_KEYWORDS = ['이브', '전야', '연휴 전', '연휴 후']
-
-function isLegalHoliday(name) {
-  if (!name) return false
-  if (EXCLUDE_KEYWORDS.some(k => name.includes(k))) return false
-  return LEGAL_KEYWORDS.some(k => name.includes(k))
+// 피드의 DESCRIPTION 필드가 "공휴일" 로 시작하는 이벤트만 빨간날로 채택.
+// Google 이 이미 "공휴일" / "기념일" 로 분류해 두므로 그 메타데이터를 그대로 신뢰한다.
+// → 노동절·임시공휴일·선거일은 자동 포함, 어버이날·스승의날·식목일 등 관습 기념일은 자동 제외.
+function isHoliday(description) {
+  if (!description) return false
+  return description.startsWith('공휴일')
 }
 
 // Google Calendar 가 쓰는 대체공휴일 표기 "쉬는 날 XXX" → "XXX 대체공휴일"
@@ -76,15 +57,14 @@ async function main() {
     if (!ev.date || !ev.summary) continue
     const y = ev.date.getUTCFullYear()
     if (y < YEAR_MIN || y > YEAR_MAX) continue
-    const rawName = ev.summary.trim()
-    if (!isLegalHoliday(rawName)) { skipped++; continue }
-    const name = normalizeName(rawName)
+    if (!isHoliday(ev.description)) { skipped++; continue }
+    const name = normalizeName(ev.summary.trim())
     const m = ev.date.getUTCMonth() + 1
     const d = ev.date.getUTCDate()
     if (!byYear.has(y)) byYear.set(y, [])
     byYear.get(y).push({ month: m, day: d, name })
   }
-  console.log(`[holidays] 법정공휴일 필터: ${skipped}개 제외`)
+  console.log(`[holidays] 기념일/비공휴일 제외: ${skipped}개`)
 
   // 각 연도 내부 정렬 + 동일 (월,일) 중복 이름 병합
   const years = [...byYear.keys()].sort((a, b) => a - b)
@@ -111,7 +91,7 @@ async function main() {
 }
 
 // ────────── iCal 최소 파서 ──────────
-// DTSTART;VALUE=DATE:YYYYMMDD 과 SUMMARY 를 추출. 폴딩 라인(시작 공백) 재결합.
+// DTSTART;VALUE=DATE:YYYYMMDD, SUMMARY, DESCRIPTION 을 추출. 폴딩 라인(시작 공백) 재결합.
 function parseICS(text) {
   const lines = text.split(/\r?\n/)
   const unfolded = []
@@ -142,6 +122,9 @@ function parseICS(text) {
     } else if (ln.startsWith('SUMMARY')) {
       const idx = ln.indexOf(':')
       if (idx >= 0) cur.summary = unescapeICal(ln.slice(idx + 1))
+    } else if (ln.startsWith('DESCRIPTION')) {
+      const idx = ln.indexOf(':')
+      if (idx >= 0) cur.description = unescapeICal(ln.slice(idx + 1))
     }
   }
   return events
