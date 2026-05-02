@@ -11,7 +11,7 @@ import { fillCorners } from './fill-corners.mjs'
 
 const __dirname    = fileURLToPath(new URL('.', import.meta.url))
 const APP_ROOT     = resolve(__dirname, '..')
-// dailydaeng-app/scripts → ../../ → Daily댕 v1.2 → ../ → Project
+// dailydaeng-app/scripts → ../../ → DAILY댕 v1.2 → ../ → Project
 const PROJECT_ROOT = resolve(APP_ROOT, '..', '..')
 const ICON_ROOT    = join(PROJECT_ROOT, 'icon')
 const PUBLIC_DIR   = join(APP_ROOT, 'public')

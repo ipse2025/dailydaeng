@@ -356,7 +356,7 @@ function SheetSyncControls() {
                color:'var(--color-primary)', textDecoration:'none',
                wordBreak:'break-all',
              }}>
-            Daily댕 백업 ↗
+            DAILY댕 백업 ↗
           </a>
         </div>
       )}

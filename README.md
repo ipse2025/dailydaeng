@@ -1,4 +1,4 @@
-# Daily댕 📅
+# DAILY댕 📅
 
 Safari 기반 스마트폰 단독 구동 데일리 로그 PWA (shiftnote 포크)
 

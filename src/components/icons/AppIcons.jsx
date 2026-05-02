@@ -1,6 +1,6 @@
 // src/components/icons/AppIcons.jsx
 // ─────────────────────────────────────────────────────────────────────
-// Daily댕 앱 아이콘 세트 (Set A · Minimal Line 톤)
+// DAILY댕 앱 아이콘 세트 (Set A · Minimal Line 톤)
 // 헤더 5버튼 및 각종 액션 버튼에 사용되는 인라인 SVG 컴포넌트 모음.
 //
 // 사용 원칙:

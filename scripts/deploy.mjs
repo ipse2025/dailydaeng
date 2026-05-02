@@ -1,4 +1,4 @@
-// Daily댕 풀 배포 매크로
+// DAILY댕 풀 배포 매크로
 //   1) 공휴일 데이터 자동 갱신 (scripts/update-holidays.mjs)
 //   2) 아이콘 동기화 (predev/prebuild 훅과 동일한 sync-icons)
 //   3) production 빌드
@@ -28,7 +28,7 @@ function run(cmd, args, opts = {}) {
 }
 
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-console.log(' Daily댕 자동 배포 매크로')
+console.log(' DAILY댕 자동 배포 매크로')
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
 // 1) 공휴일 데이터 갱신

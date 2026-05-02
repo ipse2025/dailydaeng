@@ -10,7 +10,7 @@ import { store } from './localStore'
 import { HEADER, SHEET_TAB, buildSheetRows } from './sheetSchema'
 
 const SHEETS_API   = 'https://sheets.googleapis.com/v4/spreadsheets'
-const SHEET_TITLE  = 'Daily댕 백업'
+const SHEET_TITLE  = 'DAILY댕 백업'
 
 const KEY_ENABLED   = 'sheetBackup.enabled'
 const KEY_FILE_ID   = 'sheetBackup.fileId'

@@ -1,4 +1,4 @@
-// Daily댕 → Google Sheet 행 변환
+// DAILY댕 → Google Sheet 행 변환
 // 컬럼: 날짜 | 시간 | 일정 | 운동시간(분) | 운동 메모 | 지출 종류 | 지출 내역 | 소비금액
 // 한 entry 가 여러 행으로 펼쳐짐 (항목 1개 = 행 1개, sparse 방식)
 //

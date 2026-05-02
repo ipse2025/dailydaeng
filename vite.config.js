@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Daily댕',
-        short_name: 'Daily댕',
+        name: 'DAILY댕',
+        short_name: 'DAILY댕',
         description: '개인 데일리 로그 앱',
         theme_color: '#3B82F6',
         background_color: '#F2F4F7',
