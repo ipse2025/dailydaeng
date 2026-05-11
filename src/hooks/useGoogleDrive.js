@@ -8,13 +8,13 @@
 // - login_hint 지정 → 계정 선택 화면 스킵
 
 const CLIENT_ID     = import.meta.env.VITE_GOOGLE_CLIENT_ID
-// drive.appdata: 기존 JSON 백업 (앱 전용 숨김 폴더)
-// spreadsheets:   추가된 Sheet 동기화 (사용자가 Drive에서 직접 보고 외부 에이전트가 읽기 위함)
-const SCOPE         = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/spreadsheets'
+// spreadsheets: 사용자의 "Daily댕 백업" 시트에 직접 읽기/쓰기
+const SCOPE         = 'https://www.googleapis.com/auth/spreadsheets'
 const REDIRECT_PATH = '/oauth-callback.html'
 const MSG_TYPE      = 'dailydaeng_oauth_response'
 const STORAGE_KEY   = 'dailydaeng_oauth_response'
-const TOKEN_KEY     = 'dailydaeng.oauth.token'
+// TOKEN_KEY 가 v2 로 바뀌면서 옛 drive.appdata 토큰 캐시는 자연 폐기됨
+const TOKEN_KEY     = 'dailydaeng.oauth.token.v2'
 const LOGIN_HINT    = 'ipse2025@gmail.com'
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000  // 만료 5분 전엔 새 토큰 발급
 

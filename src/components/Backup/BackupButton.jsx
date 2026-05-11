@@ -1,15 +1,17 @@
 // 헤더 우상단 ☁ 버튼 — 클릭 시 드롭다운 (내보내기/가져오기)
+// 사용자의 "Daily댕 백업" Google Sheet 한 개에 대해 양방향 동작.
 import { useState } from 'react'
 import { useGoogleDrive } from '../../hooks/useGoogleDrive'
-import { uploadBackup, downloadBackup, applyBackupData } from '../../api/backup'
-import { isSheetSyncEnabled, syncSheet } from '../../api/sheetBackup'
+import {
+  exportToSheet, fetchSheetEntries, applySheetEntries, getSheetUrl,
+} from '../../api/sheetBackup'
 import { BackupIcon, UploadIcon, DownloadIcon } from '../icons/AppIcons'
 
 export default function BackupButton({ haptic }) {
   const [open, setOpen]       = useState(false)
   const [busy, setBusy]       = useState(false)
   const [toast, setToast]     = useState(null)     // { type:'ok'|'err', msg }
-  const [confirmImport, setConfirmImport] = useState(null)  // payload
+  const [confirmImport, setConfirmImport] = useState(null)  // { map, tab, rowCount }
 
   const { requestAccessToken, clearCachedToken } = useGoogleDrive()
 
@@ -36,20 +38,9 @@ export default function BackupButton({ haptic }) {
     if (busy) return
     setBusy(true)
     try {
-      const res  = await withAuthRetry((token) => uploadBackup(token))
+      const res  = await withAuthRetry((token) => exportToSheet(token))
       const when = new Date(res.at).toLocaleString('ko-KR')
-
-      // Sheet 동기화 (옵션) — JSON 백업과 독립적으로 try/catch
-      let sheetTail = ''
-      if (isSheetSyncEnabled()) {
-        try {
-          const r = await withAuthRetry((token) => syncSheet(token))
-          sheetTail = ` + Sheet ${r.rowCount}행`
-        } catch (se) {
-          sheetTail = ` (Sheet 실패: ${se.message})`
-        }
-      }
-      showToast('ok', `Drive에 백업됨${sheetTail} · ${when}`, 4500)
+      showToast('ok', `시트에 백업됨 · ${res.rowCount}행 · ${when}`, 4500)
     } catch (e) {
       showToast('err', `내보내기 실패: ${e.message}`)
     } finally {
@@ -62,12 +53,13 @@ export default function BackupButton({ haptic }) {
     if (busy) return
     setBusy(true)
     try {
-      const payload = await withAuthRetry((token) => downloadBackup(token))
-      if (!payload) {
-        showToast('err', 'Drive에 백업 파일이 없습니다.')
+      const res = await withAuthRetry((token) => fetchSheetEntries(token))
+      const dateCount = Object.keys(res.map).length
+      if (dateCount === 0) {
+        showToast('err', '시트에 데이터가 없습니다.')
         return
       }
-      setConfirmImport(payload)
+      setConfirmImport(res)
     } catch (e) {
       showToast('err', `가져오기 실패: ${e.message}`)
     } finally {
@@ -77,7 +69,7 @@ export default function BackupButton({ haptic }) {
 
   const confirmApply = () => {
     try {
-      applyBackupData(confirmImport)
+      applySheetEntries(confirmImport.map)
       setConfirmImport(null)
       showToast('ok', '복원되었습니다. 새로고침합니다...', 1500)
       setTimeout(() => window.location.reload(), 1500)
@@ -111,8 +103,8 @@ export default function BackupButton({ haptic }) {
             borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.12)',
             padding:6, minWidth:150,
           }}>
-            <MenuItem icon={<UploadIcon   size={18} color="#0EA5E9" />} label="내보내기" desc="Drive에 백업"   onClick={handleExport} />
-            <MenuItem icon={<DownloadIcon size={18} color="#0EA5E9" />} label="가져오기" desc="Drive에서 복원" onClick={handleImport} />
+            <MenuItem icon={<UploadIcon   size={18} color="#0EA5E9" />} label="내보내기" desc="시트에 백업"   onClick={handleExport} />
+            <MenuItem icon={<DownloadIcon size={18} color="#0EA5E9" />} label="가져오기" desc="시트에서 복원" onClick={handleImport} />
           </div>
         </>
       )}
@@ -130,11 +122,12 @@ export default function BackupButton({ haptic }) {
             maxWidth:340, width:'100%', padding:20,
           }}>
             <div style={{ fontWeight:700, fontSize:16, marginBottom:8, color:'var(--color-text1)' }}>
-              Drive 백업으로 복원
+              시트 백업으로 복원
             </div>
             <div style={{ fontSize:13, color:'var(--color-text2)', lineHeight:1.5, marginBottom:14 }}>
-              백업 시각: <b>{new Date(confirmImport.exported_at).toLocaleString('ko-KR')}</b><br />
-              현재 기기의 모든 데이터가 <b>Drive 백업 내용으로 교체</b>됩니다.<br />
+              시트 <b>"{confirmImport.tab}"</b> 탭에서{' '}
+              <b>{Object.keys(confirmImport.map).length}일</b>치 일정을 불러왔습니다.<br />
+              현재 기기의 일정 데이터가 <b>시트 내용으로 통째 교체</b>됩니다.<br />
               계속하시겠습니까?
             </div>
             <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>

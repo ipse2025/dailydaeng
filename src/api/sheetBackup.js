@@ -1,126 +1,110 @@
-// Google Sheets 동기화 — 기존 JSON 백업과 독립적으로 동작
+// Google Sheet 기반 백업/복원 (양방향)
 //
-// 흐름:
-//  1) ensureSheet(token) — 시트 ID 가 없으면 새로 만들고 localStorage 에 저장
-//  2) syncSheet(token)   — 시트 전체 클리어 → 헤더 + 현재 데이터 일괄 업로드
+// - 시트는 사용자의 기존 "Daily댕 백업" 시트 한 개에 고정 (SPREADSHEET_ID 상수)
+// - 탭은 메타 조회로 첫 번째 탭 title 을 동적으로 사용 (시트1/data/Sheet1 등 표기 차이 흡수)
+// - 내보내기: 첫 탭 전체 클리어 → HEADER + 현재 entries 일괄 PUT (시트가 source of truth)
+// - 가져오기: 첫 탭 전체 GET → parseSheetRows → entries 통째 교체
 //
-// 실패해도 JSON 백업/복원 신뢰성에 영향 없도록 호출처에서 try/catch 로 격리.
+// 시트가 삭제/이동되면 API 가 404 로 명확히 실패한다. 옛 버그처럼 조용히 새 시트를
+// 만들지 않는다.
 
 import { store } from './localStore'
-import { HEADER, SHEET_TAB, buildSheetRows } from './sheetSchema'
+import { HEADER, buildSheetRows, parseSheetRows } from './sheetSchema'
 
-const SHEETS_API   = 'https://sheets.googleapis.com/v4/spreadsheets'
-const SHEET_TITLE  = 'DAILY댕 백업'
+const SPREADSHEET_ID = '1iELkisjjZMHBWeAcdCdRCoYWDTcMIAM0IuVvZwHAgLg'
+const SHEETS_API     = 'https://sheets.googleapis.com/v4/spreadsheets'
 
-const KEY_ENABLED   = 'sheetBackup.enabled'
-const KEY_FILE_ID   = 'sheetBackup.fileId'
-const KEY_LAST_AT   = 'sheetBackup.lastSyncAt'
+const KEY_LAST_AT = 'sheetBackup.lastSyncAt'
 
 function authHeaders(token) {
   return { Authorization: `Bearer ${token}` }
 }
 
-export function isSheetSyncEnabled() {
-  return store.read(KEY_ENABLED, false) === true
-}
-
-export function setSheetSyncEnabled(v) {
-  store.write(KEY_ENABLED, !!v)
-}
-
-export function getSheetFileId() {
-  return store.read(KEY_FILE_ID, null)
-}
-
-function setSheetFileId(id) {
-  if (id) store.write(KEY_FILE_ID, id)
-  else    store.remove(KEY_FILE_ID)
+export function getSheetUrl() {
+  return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`
 }
 
 export function getLastSyncAt() {
   return store.read(KEY_LAST_AT, null)
 }
 
-function setLastSyncAt(iso) {
-  store.write(KEY_LAST_AT, iso)
-}
-
-export function getSheetUrl() {
-  const id = getSheetFileId()
-  return id ? `https://docs.google.com/spreadsheets/d/${id}/edit` : null
-}
-
-// ── 새 스프레드시트 생성 (탭 이름 'data', 컬럼 너비는 기본) ──
-async function createSheet(token) {
-  const body = {
-    properties: { title: SHEET_TITLE, locale: 'ko_KR' },
-    sheets: [{ properties: { title: SHEET_TAB, gridProperties: { rowCount: 1000, columnCount: HEADER.length } } }],
-  }
-  const r = await fetch(SHEETS_API, {
-    method: 'POST',
-    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!r.ok) throw new Error(`시트 생성 실패 (${r.status})`)
-  const j = await r.json()
-  if (!j.spreadsheetId) throw new Error('시트 생성 응답에 ID 없음')
-  return j.spreadsheetId
-}
-
-// 시트 ID 가 없으면 새로 만든다.
-// 휴지통/삭제 케이스는 검증하지 않음 — drive.appdata+spreadsheets scope 로는 일반
-// Drive 파일에 GET 권한이 없어 검증이 항상 실패(404)했고, 그 결과 매 백업마다
-// 새 시트가 생성되는 버그가 있었음. 시트 무효화 시엔 clearSheet/writeAllValues
-// 가 자연스럽게 실패하므로, 사용자가 "시트 재생성" 버튼으로 복구하면 된다.
-export async function ensureSheet(token) {
-  let id = getSheetFileId()
-  if (!id) {
-    id = await createSheet(token)
-    setSheetFileId(id)
-  }
-  return id
-}
-
-// 시트 전체 클리어
-async function clearSheet(token, id) {
-  const range = encodeURIComponent(`${SHEET_TAB}!A:Z`)
-  const r = await fetch(`${SHEETS_API}/${id}/values/${range}:clear`, {
-    method: 'POST',
-    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
-    body: '{}',
-  })
-  if (!r.ok) throw new Error(`시트 비우기 실패 (${r.status})`)
-}
-
-// 헤더 + 데이터 일괄 업로드 (RAW: 문자열 그대로, 숫자는 숫자)
-async function writeAllValues(token, id, rows) {
-  const range = encodeURIComponent(`${SHEET_TAB}!A1`)
-  const body  = { values: [HEADER, ...rows] }
+async function getFirstTabTitle(token) {
   const r = await fetch(
-    `${SHEETS_API}/${id}/values/${range}?valueInputOption=RAW`,
+    `${SHEETS_API}/${SPREADSHEET_ID}?fields=sheets.properties(title,index)`,
+    { headers: authHeaders(token) }
+  )
+  if (!r.ok) throw new Error(`시트 메타 조회 실패 (${r.status})`)
+  const j = await r.json()
+  const tabs = Array.isArray(j.sheets) ? j.sheets : []
+  if (!tabs.length) throw new Error('시트에 탭이 없습니다.')
+  const first = tabs
+    .slice()
+    .sort((a, b) => (a.properties?.index ?? 0) - (b.properties?.index ?? 0))[0]
+  const title = first?.properties?.title
+  if (!title) throw new Error('탭 이름을 확인할 수 없습니다.')
+  return title
+}
+
+// A1 표기에서 탭 이름에 특수문자(공백/한글 등)가 들어가면 작은따옴표로 감싸야 안전
+function quoteTab(title) {
+  return `'${title.replace(/'/g, "''")}'`
+}
+
+export async function exportToSheet(token) {
+  const tab     = await getFirstTabTitle(token)
+  const quoted  = quoteTab(tab)
+  const rows    = buildSheetRows()
+
+  const clearRange = encodeURIComponent(`${quoted}!A:Z`)
+  const r1 = await fetch(
+    `${SHEETS_API}/${SPREADSHEET_ID}/values/${clearRange}:clear`,
     {
-      method: 'PUT',
+      method:  'POST',
       headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body:    '{}',
     }
   )
-  if (!r.ok) throw new Error(`시트 쓰기 실패 (${r.status})`)
-}
+  if (!r1.ok) throw new Error(`시트 비우기 실패 (${r1.status})`)
 
-// 외부 진입점: 동기화 1회 (ensure → clear → write)
-export async function syncSheet(token) {
-  const id   = await ensureSheet(token)
-  const rows = buildSheetRows()
-  await clearSheet(token, id)
-  await writeAllValues(token, id, rows)
+  const writeRange = encodeURIComponent(`${quoted}!A1`)
+  const body       = { values: [HEADER, ...rows] }
+  const r2 = await fetch(
+    `${SHEETS_API}/${SPREADSHEET_ID}/values/${writeRange}?valueInputOption=RAW`,
+    {
+      method:  'PUT',
+      headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    }
+  )
+  if (!r2.ok) throw new Error(`시트 쓰기 실패 (${r2.status})`)
+
   const at = new Date().toISOString()
-  setLastSyncAt(at)
-  return { fileId: id, rowCount: rows.length, at }
+  store.write(KEY_LAST_AT, at)
+  return { rowCount: rows.length, at, tab }
 }
 
-// 시트 재생성: 기존 ID 폐기 후 새로 생성하고 한 번 동기화
-// (Drive 측 파일은 사용자가 수동으로 휴지통에 넣을 수 있도록 그대로 둠)
-export async function recreateSheet(token) {
-  setSheetFileId(null)
-  return await syncSheet(token)
+// 시트에서 읽어와 entries 맵 형태로 반환. 적용은 applySheetEntries() 가 별도 수행.
+export async function fetchSheetEntries(token) {
+  const tab    = await getFirstTabTitle(token)
+  const quoted = quoteTab(tab)
+  const range  = encodeURIComponent(`${quoted}!A:H`)
+
+  const r = await fetch(
+    `${SHEETS_API}/${SPREADSHEET_ID}/values/${range}`,
+    { headers: authHeaders(token) }
+  )
+  if (!r.ok) throw new Error(`시트 읽기 실패 (${r.status})`)
+  const j      = await r.json()
+  const values = Array.isArray(j.values) ? j.values : []
+  const map    = parseSheetRows(values)
+  return { map, tab, rowCount: values.length }
+}
+
+// 가져오기 확정 — entries 를 통째 교체.
+export function applySheetEntries(map) {
+  if (!map || typeof map !== 'object') {
+    throw new Error('잘못된 데이터 형식입니다.')
+  }
+  store.write('entries', map)
+  return { entries: Object.keys(map).length }
 }
