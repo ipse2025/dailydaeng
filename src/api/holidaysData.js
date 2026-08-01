@@ -1,5 +1,5 @@
 // 한국 공휴일 정적 데이터
-// scripts/update-holidays.mjs 가 자동 생성 (최종 갱신: 2026-04-30)
+// scripts/update-holidays.mjs 가 자동 생성 (최종 갱신: 2026-08-01)
 // 소스: Google Calendar "대한민국의 휴일" 공개 iCal 피드
 // 수동 보정이 필요하면 스크립트 재실행 대신 이 파일을 직접 수정 후 재배포.
 
@@ -91,8 +91,9 @@ export const HOLIDAYS = {
   ],
   2027: [
     { month:  1, day:  1, name: "새해첫날" },
-    { month:  2, day:  6, name: "설날" },
+    { month:  2, day:  7, name: "설날" },
     { month:  2, day:  8, name: "설날 연휴" },
+    { month:  2, day:  9, name: "설날 대체공휴일" },
     { month:  3, day:  1, name: "삼일절" },
     { month:  5, day:  1, name: "노동절" },
     { month:  5, day:  3, name: "노동절 대체공휴일" },
@@ -100,14 +101,18 @@ export const HOLIDAYS = {
     { month:  5, day: 13, name: "부처님오신날" },
     { month:  6, day:  6, name: "현충일" },
     { month:  7, day: 17, name: "제헌절" },
+    { month:  7, day: 19, name: "제헌절 대체공휴일" },
     { month:  8, day: 15, name: "광복절" },
+    { month:  8, day: 16, name: "광복절 대체공휴일" },
     { month:  9, day: 14, name: "추석 연휴" },
     { month:  9, day: 15, name: "추석" },
     { month:  9, day: 16, name: "추석 연휴" },
     { month: 10, day:  3, name: "개천절" },
+    { month: 10, day:  4, name: "개천절 대체공휴일" },
     { month: 10, day:  9, name: "한글날" },
     { month: 10, day: 11, name: "한글날 대체공휴일" },
     { month: 12, day: 25, name: "크리스마스" },
+    { month: 12, day: 27, name: "크리스마스 대체공휴일" },
   ],
   2028: [
     { month:  1, day:  1, name: "새해첫날" },
